@@ -17,7 +17,6 @@ var saveProp = {};
 var support = Flipsnap.support = {};
 var gestureStart = false;
 
-// 滑动距离和角度的阀值
 var DISTANCE_THRESHOLD = 5;
 var ANGLE_THREHOLD = 55;
 
@@ -50,9 +49,7 @@ support.mspointer = window.navigator.msPointerEnabled;
 
 support.cssAnimation = (support.transform3d || support.transform) && support.transition;
 
-// 定义支持的事件列表
 var eventTypes = ['touch', 'mouse'];
-
 var events = {
   start: {
     touch: 'touchstart',
@@ -68,7 +65,6 @@ var events = {
   }
 };
 
-// 监听手势事件，设置一个标志
 if (support.addEventListener) {
   document.addEventListener('gesturestart', function() {
     gestureStart = true;
@@ -79,14 +75,12 @@ if (support.addEventListener) {
   });
 }
 
-// 定义主对象
 function Flipsnap(element, opts) {
   return (this instanceof Flipsnap)
     ? this.init(element, opts)
     : new Flipsnap(element, opts);
 }
 
-// 对象初始化
 Flipsnap.prototype.init = function(element, opts) {
   var self = this;
 
@@ -101,7 +95,6 @@ Flipsnap.prototype.init = function(element, opts) {
   }
 
   if (support.mspointer) {
-    // 允许垂直轴触摸驱动的平移
     self.element.style.msTouchAction = 'pan-y';
   }
 
@@ -110,10 +103,6 @@ Flipsnap.prototype.init = function(element, opts) {
   self.distance = opts.distance;
   self.maxPoint = opts.maxPoint;
   self.disableTouch = (opts.disableTouch === undefined) ? false : opts.disableTouch;
-
-  // 允许循环滚动
-  self.marquee = (opts.marquee === undefined) ? false : opts.marquee;
-
   self.disable3d = (opts.disable3d === undefined) ? false : opts.disable3d;
   self.transitionDuration = (opts.transitionDuration === undefined) ? '350ms' : opts.transitionDuration + 'ms';
 
@@ -145,7 +134,6 @@ Flipsnap.prototype.init = function(element, opts) {
   // initilize
   self.refresh();
 
-  // 绑定touchstart和mousedown事件
   eventTypes.forEach(function(type) {
     self.element.addEventListener(events.start[type], self, false);
   });
@@ -213,24 +201,15 @@ Flipsnap.prototype.refresh = function() {
   self.moveToPoint();
 };
 
-// 使用按钮点击的情况
 Flipsnap.prototype.hasNext = function() {
   var self = this;
-   // new logic 在跑马灯的情况下已经到达最后一个
-  if(self.marquee && self.currentPoint === self._maxPoint){
-    self.currentPoint = -1;
-    return true
-  } 
+
   return self.currentPoint < self._maxPoint;
 };
 
-Flipsnap.prototype.hasPrev = function(prev) {
+Flipsnap.prototype.hasPrev = function() {
   var self = this;
-  //在跑马灯的情况下已经到达第一个
-  if(self.marquee && self.currentPoint === 0){
-    self.currentPoint = self._maxPoint + 1;
-    return true;
-  }
+
   return self.currentPoint > 0;
 };
 
@@ -242,7 +221,6 @@ Flipsnap.prototype.toNext = function(transitionDuration) {
   }
 
   self.moveToPoint(self.currentPoint + 1, transitionDuration);
-
 };
 
 Flipsnap.prototype.toPrev = function(transitionDuration) {
@@ -258,7 +236,6 @@ Flipsnap.prototype.toPrev = function(transitionDuration) {
 Flipsnap.prototype.moveToPoint = function(point, transitionDuration) {
   var self = this;
   
-  // 滑动延迟时间
   transitionDuration = transitionDuration === undefined
     ? self.transitionDuration : transitionDuration + 'ms';
 
@@ -268,12 +245,13 @@ Flipsnap.prototype.moveToPoint = function(point, transitionDuration) {
   if (point === undefined) {
     point = self.currentPoint;
   }
+
   if (point < 0) {
     self.currentPoint = 0;
   }
   else if (point > self._maxPoint) {
     self.currentPoint = self._maxPoint;
-  } 
+  }
   else {
     self.currentPoint = parseInt(point, 10);
   }
@@ -314,12 +292,10 @@ Flipsnap.prototype._setX = function(x, transitionDuration) {
 Flipsnap.prototype._touchStart = function(event, type) {
   var self = this;
 
-  //禁用滑动，或正在滚动，或处于手势事件中时，不执行start
   if (self.disableTouch || self.scrolling || gestureStart) {
     return;
   }
 
-  // 绑定touchmove，touchend和mousemove，mouseup事件
   self.element.addEventListener(events.move[type], self, false);
   document.addEventListener(events.end[type], self, false);
 
@@ -328,7 +304,6 @@ Flipsnap.prototype._touchStart = function(event, type) {
     event.preventDefault();
   }
 
-  // 判断是否支持css3动画
   if (support.cssAnimation) {
     self._setStyle({ transitionDuration: '0ms' });
   }
@@ -337,8 +312,6 @@ Flipsnap.prototype._touchStart = function(event, type) {
   }
   self.scrolling = true;
   self.moveReady = false;
-
-  // 记录手指开始滑动时的坐标
   self.startPageX = getPage(event, 'pageX');
   self.startPageY = getPage(event, 'pageY');
   self.basePageX = self.startPageX;
@@ -354,7 +327,6 @@ Flipsnap.prototype._touchMove = function(event, type) {
     return;
   }
 
-  // 获取坐标
   var pageX = getPage(event, 'pageX');
   var pageY = getPage(event, 'pageY');
   var distX;
@@ -427,24 +399,13 @@ Flipsnap.prototype._touchEnd = function(event, type) {
     (self.directionX < 0) ? Math.floor(newPoint) :
     Math.round(newPoint);
 
-  // 当为循环滑动时
-  if(self.marquee && newPoint === self._maxPoint + 1 && self.directionX > 0){
-    console.log("marquee next is ok");
-    newPoint = -1;
-  } 
+  if (newPoint < 0) {
+    newPoint = 0;
+  }
   else if (newPoint > self._maxPoint) {
     newPoint = self._maxPoint;
   }
 
-  if(self.marquee && newPoint === -1 && self.directionX < 0){
-    console.log("marquee previous is ok");
-    newPoint = self._maxPoint;
-  } 
-  else if (newPoint < 0) {
-    newPoint = 0;
-  }
-
-  console.log("currentPoint is " + newPoint);
   self._touchAfter({
     moved: newPoint !== self.currentPoint,
     originalPoint: self.currentPoint,
@@ -526,7 +487,6 @@ Flipsnap.prototype._getTranslate = function(x) {
     : 'translate(' + x + 'px, 0)';
 };
 
-// 触发自定义事件
 Flipsnap.prototype._triggerEvent = function(type, bubbles, cancelable, data) {
   var self = this;
 

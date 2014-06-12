@@ -60,10 +60,10 @@ h1, h2, h3 {
 .controls .num {
   width: 60px; }
 
-#marquee .flipsnap, #demo-simple .flipsnap {
+#demo-simple .flipsnap {
   width: 960px;
   padding: 0; }
-#marquee .item, #demo-simple .item {
+#demo-simple .item {
   width: 310px;
   margin: 0; }
 
