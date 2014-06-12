@@ -6,6 +6,12 @@ if (!$('.demo').length) return;
 	Flipsnap('#demo-simple .flipsnap');
 })();
 
+(function marquee() {
+	Flipsnap('#marquee .flipsnap',{
+		marquee : true
+	});
+})();
+
 (function img() {
 	Flipsnap('#demo-img .flipsnap');
 })();
@@ -146,7 +152,8 @@ if (!$('.demo').length) return;
 (function nextprev() {
 	var $demo = $('#demo-nextprev');
 	var flipsnap = Flipsnap('#demo-nextprev .flipsnap', {
-		distance: 230
+		distance: 230,
+		marquee : true
 	});
 	var $next = $demo.find(".next").click(function() {
 		flipsnap.toNext();
@@ -154,10 +161,10 @@ if (!$('.demo').length) return;
 	var $prev = $demo.find(".prev").click(function() {
 		flipsnap.toPrev();
 	});
-	flipsnap.element.addEventListener('fspointmove', function() {
-		$next.attr("disabled", !flipsnap.hasNext());
-		$prev.attr("disabled", !flipsnap.hasPrev());
-	}, false);
+	// flipsnap.element.addEventListener('fspointmove', function() {
+	// 	$next.attr("disabled", !flipsnap.hasNext(true));
+	// 	$prev.attr("disabled", !flipsnap.hasPrev(true));
+	// }, false);
 })();
 
 (function moveToPoint() {
