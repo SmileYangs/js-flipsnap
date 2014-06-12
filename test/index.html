@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>flipsnap.js Test</title>
+<link rel="stylesheet" href="lib/mocha.css">
+<style>
+#sandbox {
+  visibility: hidden;
+}
+</style>
+</head>
+<body>
+<div id="mocha"></div>
+<script src="lib/jquery.js"></script>
+<script src="lib/sinon.js"></script>
+<script src="lib/mocha.js"></script>
+<script src="lib/expect.js"></script>
+<script src="lib/setup.js"></script>
+<script src="../flipsnap.js" data-cover></script>
+<script src="tests.js"></script>
+<div id="sandbox"></div>
+</body>
+</html>
