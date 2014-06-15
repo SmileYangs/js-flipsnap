@@ -62,10 +62,16 @@ h1, h2, h3 {
 
 #marquee .flipsnap, #demo-simple .flipsnap {
   width: 960px;
-  padding: 0; }
+  padding: 0; 
+}
+
 #marquee .item, #demo-simple .item {
   width: 310px;
   margin: 0; }
+#marquee .item {
+  display: inline-block;
+}
+
 
 #demo-img .flipsnap {
   width: 960px;

@@ -161,10 +161,10 @@ if (!$('.demo').length) return;
 	var $prev = $demo.find(".prev").click(function() {
 		flipsnap.toPrev();
 	});
-	// flipsnap.element.addEventListener('fspointmove', function() {
-	// 	$next.attr("disabled", !flipsnap.hasNext(true));
-	// 	$prev.attr("disabled", !flipsnap.hasPrev(true));
-	// }, false);
+	flipsnap.element.addEventListener('fspointmove', function() {
+		$next.attr("disabled", !flipsnap.hasNext(true));
+		$prev.attr("disabled", !flipsnap.hasPrev(true));
+	}, false);
 })();
 
 (function moveToPoint() {

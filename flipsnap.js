@@ -207,18 +207,94 @@ Flipsnap.prototype.refresh = function() {
     self._distance = self.distance;
   }
 
-  // setting maxX
-  self._maxX = -self._distance * self._maxPoint;
+  // 跑马灯效果下，初始化，往首尾添加新节点
+  if(self.marquee){
+    // 缓存所有的节点
+    self.items = (function(){
+      var childNodes = self.element.childNodes,
+        items = [],
+        i = 0,
+        len = childNodes.length,
+        node;
+      for(; i < len; i++) {
+        node = childNodes[i];
+        if (node.nodeType === 1) {
+          items.push(node);
+        }
+      }
+      return items;
+    })();
 
-  self.moveToPoint();
+    // 获取视口的宽度
+    self.viewWidth = (function(){
+      var viewport = self.element.parentNode;
+      return viewport.offsetWidth;
+    })();
+
+    // 缓存每一个滑块的宽度
+    self.sliderWidth = outerWidth(self.items[0]);
+    // 每次需要往首尾添加的节点数目
+    self.addtionNum = (function(){
+      return Math.ceil(self.viewWidth/self.sliderWidth);
+    })();
+    
+    // 往节点队列首尾部添加对应数目的节点
+    (function(){
+      // 改变容器的宽度
+      self.element.style.width = self.element.offsetWidth + 2 * self.addtionNum * self.sliderWidth + "px";
+
+      function getFirstChild(){
+        var childNodes = self.element.childNodes,
+          i=0,
+          len = childNodes.length,
+          node;
+        for(; i < len; i++) {
+          node = childNodes[i];
+          if (node.nodeType === 1) {
+            break;
+          }
+        }
+        return node;
+      }
+      // 添加
+      for(var i=0,l=self.items.length; i < self.addtionNum; i++){
+        var index = i%l,
+            indexBefore = 2-index,
+            addNodeLast = self.items[index].cloneNode(true),
+            addNodeBefore = self.items[indexBefore].cloneNode(true),
+            firstChild = getFirstChild();
+        self.element.insertBefore(addNodeBefore,firstChild);
+        self.element.appendChild(addNodeLast);
+      }
+    })();
+
+    // 首部添加之后，应该计算初次加载的位置
+    (function(){
+      var x = - self.addtionNum * self.sliderWidth;
+      self.element.style.left =  x + 'px';
+      self.element.style.position = "relative";
+      self.currentX = 0;
+    })()
+
+    self.canMoveNum = (function(){
+      var l = self.element.offsetWidth - self.addtionNum * self.sliderWidth,
+          pre = Math.floor(l/self._distance),
+          condition = l%self._distance;
+      return condition > self.sliderWidth ? pre : pre - 1;
+    })();
+  }
+  else {
+    self._maxX = -self._distance * self._maxPoint;
+    self.moveToPoint();
+  }
+
 };
 
 // 使用按钮点击的情况
 Flipsnap.prototype.hasNext = function() {
   var self = this;
-   // new logic 在跑马灯的情况下已经到达最后一个
-  if(self.marquee && self.currentPoint === self._maxPoint){
-    self.currentPoint = -1;
+  //在跑马灯的情况下
+  if(self.marquee){
     return true
   } 
   return self.currentPoint < self._maxPoint;
@@ -226,9 +302,8 @@ Flipsnap.prototype.hasNext = function() {
 
 Flipsnap.prototype.hasPrev = function(prev) {
   var self = this;
-  //在跑马灯的情况下已经到达第一个
-  if(self.marquee && self.currentPoint === 0){
-    self.currentPoint = self._maxPoint + 1;
+  //在跑马灯的情况下
+  if(self.marquee){
     return true;
   }
   return self.currentPoint > 0;
@@ -240,6 +315,11 @@ Flipsnap.prototype.toNext = function(transitionDuration) {
   if (!self.hasNext()) {
     return;
   }
+  self.directionX = 1;
+  // if(self.marquee && self.oldPoint === self._maxPoint + 1){
+  //   self.oldPoint = undefined;
+  //   self.moveToPoint(0,0);
+  // }
 
   self.moveToPoint(self.currentPoint + 1, transitionDuration);
 
@@ -251,7 +331,7 @@ Flipsnap.prototype.toPrev = function(transitionDuration) {
   if (!self.hasPrev()) {
     return;
   }
-
+  
   self.moveToPoint(self.currentPoint - 1, transitionDuration);
 };
 
@@ -264,18 +344,24 @@ Flipsnap.prototype.moveToPoint = function(point, transitionDuration) {
 
   var beforePoint = self.currentPoint;
 
-  // not called from `refresh()`
+  // called from `refresh()`
   if (point === undefined) {
     point = self.currentPoint;
   }
-  if (point < 0) {
-    self.currentPoint = 0;
-  }
-  else if (point > self._maxPoint) {
-    self.currentPoint = self._maxPoint;
-  } 
-  else {
-    self.currentPoint = parseInt(point, 10);
+
+
+  if(!self.marquee){
+    if (point < 0) {
+      self.currentPoint = 0;
+    }
+    else if (point > self._maxPoint) {
+      self.currentPoint = self._maxPoint; 
+    } 
+    else {
+      self.currentPoint = parseInt(point, 10);
+    }
+  } else {
+    self.currentPoint = point;
   }
 
   if (support.cssAnimation) {
@@ -284,7 +370,8 @@ Flipsnap.prototype.moveToPoint = function(point, transitionDuration) {
   else {
     self.animation = true;
   }
-  self._setX(- self.currentPoint * self._distance, transitionDuration);
+
+  self._setX(- self.currentPoint * self._distance, transitionDuration,self.currentPoint);
 
   if (beforePoint !== self.currentPoint) { // is move?
     // `fsmoveend` is deprecated
@@ -294,7 +381,7 @@ Flipsnap.prototype.moveToPoint = function(point, transitionDuration) {
   }
 };
 
-Flipsnap.prototype._setX = function(x, transitionDuration) {
+Flipsnap.prototype._setX = function(x, transitionDuration,newPoint) {
   var self = this;
 
   self.currentX = x;
@@ -309,6 +396,17 @@ Flipsnap.prototype._setX = function(x, transitionDuration) {
       self.element.style.left = x + 'px';
     }
   }
+  // 当动画完全停止后，将滑块移动到起始位置
+  if(self.marquee && newPoint === self._maxPoint + 1 && self.directionX > 0){
+    // 计算currentX
+    self.currentX = 0;
+  }
+  if(self.marquee && newPoint === -1 && self.directionX < 0){
+    // 计算currentX
+    var x = - self._maxPoint*self.sliderWidth;
+    self.currentX = x;
+  }
+
 };
 
 Flipsnap.prototype._touchStart = function(event, type) {
@@ -413,7 +511,6 @@ Flipsnap.prototype._touchMove = function(event, type) {
 
 Flipsnap.prototype._touchEnd = function(event, type) {
   var self = this;
-
   self.element.removeEventListener(events.move[type], self, false);
   document.removeEventListener(events.end[type], self, false);
 
@@ -427,24 +524,15 @@ Flipsnap.prototype._touchEnd = function(event, type) {
     (self.directionX < 0) ? Math.floor(newPoint) :
     Math.round(newPoint);
 
-  // 当为循环滑动时
-  if(self.marquee && newPoint === self._maxPoint + 1 && self.directionX > 0){
-    console.log("marquee next is ok");
-    newPoint = -1;
+  if(!self.marquee){
+    if (newPoint > self._maxPoint) {
+      newPoint = self._maxPoint;
+    }
+    else if (newPoint < 0) {
+      newPoint = 0;
+    }
   } 
-  else if (newPoint > self._maxPoint) {
-    newPoint = self._maxPoint;
-  }
-
-  if(self.marquee && newPoint === -1 && self.directionX < 0){
-    console.log("marquee previous is ok");
-    newPoint = self._maxPoint;
-  } 
-  else if (newPoint < 0) {
-    newPoint = 0;
-  }
-
-  console.log("currentPoint is " + newPoint);
+ 
   self._touchAfter({
     moved: newPoint !== self.currentPoint,
     originalPoint: self.currentPoint,
@@ -452,7 +540,15 @@ Flipsnap.prototype._touchEnd = function(event, type) {
     cancelled: false
   });
 
-  self.moveToPoint(newPoint);
+  // 在跑马灯情况下，防止抖动
+  if(self.marquee){
+    if(self.directionX !== 0){
+      self.moveToPoint(newPoint);
+    }     
+  } else {
+    self.moveToPoint(newPoint);
+  }
+
 };
 
 Flipsnap.prototype._click = function(event) {
@@ -573,6 +669,23 @@ function setStyle(style, prop, val) {
       }
     });
   }
+}
+
+// 获取css值
+function GetCurrentStyle(obj,prop){
+  if(obj.currentStyle)
+    return obj.currentStyle[prop];
+  else if(window.getComputedStyle){
+    return document.defaultView.getComputedStyle(obj,null)[prop];
+  }
+  return null;
+}
+// 获取元素的outerWidth = margin + padding + width
+function outerWidth(obj){
+  var offsetWidth = obj.offsetWidth,
+      marginL = parseInt(GetCurrentStyle(obj,"marginLeft")),
+      marginR = parseInt(GetCurrentStyle(obj,"marginRight"));
+  return offsetWidth + marginL + marginR;
 }
 
 function getCSSVal(prop) {
