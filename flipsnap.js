@@ -207,9 +207,6 @@ Flipsnap.prototype.refresh = function() {
   }
 
   // 跑马灯效果下，初始化，往首尾添加新节点
-  // 存在问题  
-  //            2.使用按钮时滚动错误
-  //            3.打点错误
   if(self.marquee){
     // 判断是否在动画中
     self.isAnimate = false;
@@ -316,33 +313,21 @@ Flipsnap.prototype.refresh = function() {
 // 使用按钮点击的情况
 Flipsnap.prototype.hasNext = function() {
   var self = this;
-  //在跑马灯的情况下
-  if(self.marquee){
-    return true
-  } 
   return self.currentPoint < self._maxPoint;
 };
 
 Flipsnap.prototype.hasPrev = function(prev) {
   var self = this;
-  //在跑马灯的情况下
-  if(self.marquee){
-    return true;
-  }
-  
   return self.currentPoint > 0;
 };
 
 Flipsnap.prototype.toNext = function(transitionDuration) {
   var self = this;
 
-  if (!self.hasNext()) {
-    return;
-  }
   self.directionX = 1;
   // 跑马灯模式下
-  if(self.marquee){
-    self.slideToNext = true;
+  if (!self.hasNext() && !marquee) {
+    return;
   }
   self.moveToPoint(self.currentPoint + 1, transitionDuration);
 
@@ -351,15 +336,11 @@ Flipsnap.prototype.toNext = function(transitionDuration) {
 Flipsnap.prototype.toPrev = function(transitionDuration) {
   var self = this;
 
-  if (!self.hasPrev()) {
+  self.directionX = -1;
+  if (!self.hasPrev() && !marquee) {
     return;
   }
-  self.directionX = -1;
 
-  if(self.marquee){
-    self.slideToPre = true;
-  }
-  
   self.moveToPoint(self.currentPoint - 1, transitionDuration);
 };
 
