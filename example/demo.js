@@ -25,7 +25,8 @@ if (!$('.demo').length) return;
 (function maxPoint() {
 	Flipsnap('#demo-maxPoint .flipsnap', {
 		distance: 160, // 80px * 2
-		maxPoint: 3    // move able 3 times
+		maxPoint: 3,	// move able 3 times
+		marquee : true
 	});
 })();
 
@@ -40,7 +41,8 @@ if (!$('.demo').length) return;
 	var $demo = $('#demo-pointmove');
 	var $pointer = $demo.find('.pointer span');
 	var flipsnap = Flipsnap('#demo-pointmove .flipsnap', {
-		distance: 230
+		distance: 230,
+		marquee: true
 	});
 	flipsnap.element.addEventListener('fspointmove', function() {
 		$pointer.filter('.current').removeClass('current');
