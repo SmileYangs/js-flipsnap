@@ -208,8 +208,6 @@ Flipsnap.prototype.refresh = function() {
 
   // 跑马灯效果下，初始化，往首尾添加新节点
   if(self.marquee){
-    // 判断是否在动画中
-    self.isAnimate = false;
     // 缓存所有的节点
     self.items = (function(){
       var childNodes = self.element.childNodes,
@@ -299,10 +297,6 @@ Flipsnap.prototype.refresh = function() {
         self.moveToPoint(self._maxPoint,0);
       }
     },false);
-    // console.log("need slider %d to init ",self.canMoveNum);
-    // console.log( "slider num is " + self.items.length);
-    // console.log("slider width is " + self.sliderWidth);
-    // console.log("need to add is " + self.addtionNum);
   }
   else {
     self._maxX = -self._distance * self._maxPoint;
